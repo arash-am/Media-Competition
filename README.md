@@ -1,2 +1,2 @@
 # Media-Competition
-The repository for the paper "Gaining Influence, Losing Integrity: How Media Competition Fosters Misinformation"
+The repository for the paper "How Media Competition Fuels the Spread of Misinformation"
