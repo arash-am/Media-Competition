@@ -22,7 +22,7 @@ nbins = 30
 
 env = Opinion_w_media(N=N,
                       M=M,
-                      terminal_time=401,
+                      terminal_time=201,
                       bM=4,
                       b=18,
                       noise_level=0.1,
@@ -39,15 +39,15 @@ env = Opinion_w_media(N=N,
 #########################################
 #  3) Hyperparameters
 #########################################
-gamma = 0.95
+gamma = 0.98
 learning_rate = 1e-4
 batch_size = 64
-capacity = 3*10**5
-episode = 2_000_000
+capacity = 5*10**5
+episode = 10_000_000
 observation_dim = nbins + M
 bpl = 10
 bop = -10
-TAU = 0.002
+TAU = 0.005
 
 # Number of possible discrete actions (for M=10, 2^(M//2))
 action_dimension = 2 ** (M // 2)
@@ -62,7 +62,7 @@ avg_net    = soft_q_net(observation_dim, bpl, bop, M, action_dimension).to(devic
 eval_net.load_state_dict(target_net.state_dict())
 avg_net.load_state_dict(eval_net.state_dict())
 
-optimizer = torch.optim.Adam(eval_net.parameters(), lr=learning_rate, weight_decay=1e-3)
+optimizer = torch.optim.Adam(eval_net.parameters(), lr=learning_rate, weight_decay=1e-4)
 buffer = replay_buffer(capacity)
 
 #########################################
@@ -72,7 +72,7 @@ count = 0
 reward_total = []
 Loss = []
 epoch = 0
-max_epochs = 40000
+max_epochs = 100_000
 Done = False
 C = []
 X = []
@@ -121,7 +121,7 @@ for i in range(episode):
                     avg_net.state_dict()[key] += eval_net.state_dict()[key] / 100.0
 
                 # Occasionally plot
-                if epoch % 100 == 0:
+                if epoch % 1000 == 0:
                     plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n,cmap)
                     reward_total = []
                     C = []
@@ -131,7 +131,7 @@ for i in range(episode):
                 # ------------------------------
                 # SAVE CHECKPOINT every 1000 epochs
                 # ------------------------------
-                if epoch % 1000 == 0 and epoch > 0:
+                if epoch % 2000 == 0 and epoch > 0:
                     ckpt_path = f"models/checkpoint_epoch_{epoch}.pth"
                     torch.save({
                         'epoch': epoch,
