@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="00c12099-63be-4817-ad97-a97f130a17f5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/Codes.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Files/Env.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Files/plotter.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Files/soft_nash.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-    </list>
+    <list default="true" id="00c12099-63be-4817-ad97-a97f130a17f5" name="Changes" comment="First Commit for the revision" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -69,12 +59,33 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1738080428636</updated>
-      <workItem from="1738080429688" duration="7637000" />
+      <workItem from="1738080429688" duration="7968000" />
     </task>
+    <task id="LOCAL-00001" summary="First Commit for the revision">
+      <option name="closed" value="true" />
+      <created>1738089292659</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1738089292659</updated>
+    </task>
+    <task id="LOCAL-00002" summary="First Commit for the revision">
+      <option name="closed" value="true" />
+      <created>1738089305933</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1738089305933</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="First Commit for the revision" />
+    <option name="LAST_COMMIT_MESSAGE" value="First Commit for the revision" />
   </component>
   <component name="XDebuggerManager">
     <watches-manager>

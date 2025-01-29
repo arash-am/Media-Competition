@@ -17,11 +17,13 @@ class Opinion_w_media():
                  h=0.01,
                  r_scale=100,
                  eta_1=1,
-                 eta_2=1):
+                 eta_2=1,
+                 beta_1=3,
+                 beta_2=2,):
         self.N = N
         self.M = M
         self.terminal_time = terminal_time
-        Beta = torch.distributions.beta.Beta(3,2)
+        Beta = torch.distributions.beta.Beta(beta_1,beta_2)
         # Put parameters on the same device:
         self.s = Beta.sample(sample_shape=(N,)).to(device)
         self.ym = torch.linspace(-1, 1, steps=self.M).to(device)
@@ -36,6 +38,7 @@ class Opinion_w_media():
         self.r_scale = r_scale
         self.eta_1=eta_1
         self.eta_2 = eta_2
+        self.AEm_abs = torch.zeros((self.N, self.M), device=device)
     def reset(self):
         """
           Resets the environment.
@@ -101,7 +104,7 @@ class Opinion_w_media():
                            * torch.abs(DM))
             # shape [N, N]
             A = torch.exp(-self.b * torch.abs(D))
-
+            self.AEm_abs += torch.exp(-self.bM * torch.abs(DM)) * (1 - action)
             t += 1
             # Weighted average for credibility
             c = c * (gam) + action * (1 - gam)

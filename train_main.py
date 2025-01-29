@@ -1,10 +1,11 @@
-from Files.Env import *
-from Files.soft_nash import *
-from Files.plotter import *
-import matplotlib.pyplot as plt
 import torch
-from matplotlib.colors import LinearSegmentedColormap
+import os
 
+from Files.Env import Opinion_w_media
+from Files.soft_nash import soft_q_net, replay_buffer, train
+from Files.plotter import plot_and_log
+from matplotlib.colors import LinearSegmentedColormap
+cmap = LinearSegmentedColormap.from_list("custom_blue_red", [(0, 0, 1), (1, 0, 0)], N=100)
 #########################################
 #  1) Setup the device for CUDA
 #########################################
@@ -17,22 +18,22 @@ print("Using device:", device)
 N = 500
 M = 10
 terminal_time = 200
-Duration = 1
 nbins = 30
-scale = 100
 
 env = Opinion_w_media(N=N,
                       M=M,
-                      terminal_time=terminal_time,
-                      bM=5,
-                      b=20,
+                      terminal_time=401,
+                      bM=4,
+                      b=18,
                       noise_level=0.1,
                       duration=1,
                       h=torch.tensor(0.1, device=device),
                       nbins=30,
                       r_scale=100,
                       eta_1=1,
-                      eta_2=1
+                      eta_2=1,
+                      beta_1=3,
+                      beta_2=2,
                       )
 
 #########################################
@@ -41,12 +42,14 @@ env = Opinion_w_media(N=N,
 gamma = 0.95
 learning_rate = 1e-4
 batch_size = 64
-capacity = 10**5
-episode = 2000000
+capacity = 3*10**5
+episode = 2_000_000
 observation_dim = nbins + M
 bpl = 10
 bop = -10
 TAU = 0.002
+
+# Number of possible discrete actions (for M=10, 2^(M//2))
 action_dimension = 2 ** (M // 2)
 
 #########################################
@@ -68,28 +71,22 @@ buffer = replay_buffer(capacity)
 count = 0
 reward_total = []
 Loss = []
-R_t = 0
-loss_p = -1
 epoch = 0
 max_epochs = 40000
-
-# For real-time plotting
-# plt.ion()
-cmap = LinearSegmentedColormap.from_list("custom_blue_red", [(0, 0, 1), (1, 0, 0)], N=100)
-
 Done = False
 C = []
 X = []
 Loss = []
 
-
+# Ensure "models" directory exists
+os.makedirs("models", exist_ok=True)
 
 #########################################
-#   Main Loop                           #
+#   Main Loop (Training)
 #########################################
 for i in range(episode):
-    xct = env.reset()           # reset environment
-    obs = env.state2obs(xct)    # observation
+    xct = env.reset()           # Reset environment
+    obs = env.state2obs(xct)    # Observation
     if epoch > max_epochs:
         break
 
@@ -105,7 +102,7 @@ for i in range(episode):
         # Store in replay
         buffer.store(obs.cpu(), action_id, reward.item(), next_obs.cpu(), float(Done))
 
-        # Accumulate reward in a list for logging
+        # Accumulate reward
         reward_total.append(reward.item())
         obs = next_obs
 
@@ -125,22 +122,38 @@ for i in range(episode):
 
                 # Occasionally plot
                 if epoch % 100 == 0:
-                    plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap)
-                    # Reset these accumulators AFTER plotting
+                    plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n,cmap)
                     reward_total = []
                     C = []
                     X = []
                     avg_net.load_state_dict(eval_net.state_dict())
 
+                # ------------------------------
+                # SAVE CHECKPOINT every 1000 epochs
+                # ------------------------------
+                if epoch % 1000 == 0 and epoch > 0:
+                    ckpt_path = f"models/checkpoint_epoch_{epoch}.pth"
+                    torch.save({
+                        'epoch': epoch,
+                        'eval_net_state_dict': eval_net.state_dict(),
+                        'target_net_state_dict': target_net.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict()
+                    }, ckpt_path)
+                    print(f"Checkpoint saved at {ckpt_path}")
+
         if Done:
             # On termination, grab final opinions & credibility
-            x_final = n_xct[:env.N].detach().cpu().numpy()      # shape (N,)
-            c_final = n_xct[env.N:-1].detach().cpu().numpy()    # shape (M,)
+            x_final = n_xct[:env.N].detach().cpu().numpy()
+            c_final = n_xct[env.N:-1].detach().cpu().numpy()
             X.append(x_final)
             C.append(c_final)
             break
 
-# Final plot after everything
-plt.ioff()
-plt.show()
 print("Training complete.")
+
+#########################################
+#  6) Save final model
+#########################################
+final_model_path = "models/final_eval_net.pth"
+torch.save(eval_net.state_dict(), final_model_path)
+print(f"Final model saved as {final_model_path}")
