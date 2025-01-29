@@ -40,14 +40,14 @@ env = Opinion_w_media(N=N,
 #  3) Hyperparameters
 #########################################
 gamma = 0.98
-learning_rate = 1e-4
+learning_rate = 1e-3
 batch_size = 64
 capacity = 5*10**5
 episode = 10_000_000
 observation_dim = nbins + M
-bpl = 10
-bop = -10
-TAU = 0.005
+bpl = 30
+bop = -30
+TAU = 0.003
 
 # Number of possible discrete actions (for M=10, 2^(M//2))
 action_dimension = 2 ** (M // 2)
@@ -73,11 +73,11 @@ reward_total = []
 Loss = []
 epoch = 0
 max_epochs = 100_000
-Done = False
+done = False
 C = []
 X = []
 Loss = []
-
+plot_interval=1000
 # Ensure "models" directory exists
 os.makedirs("models", exist_ok=True)
 
@@ -96,11 +96,11 @@ for i in range(episode):
         count += 1
 
         # Step environment
-        n_xct, reward, Done, _ = env.step(u_action, v_action)
+        n_xct, reward, done, _ = env.step(u_action, v_action)
         next_obs = env.state2obs(n_xct)
 
         # Store in replay
-        buffer.store(obs.cpu(), action_id, reward.item(), next_obs.cpu(), float(Done))
+        buffer.store(obs.cpu(), action_id, reward.item(), next_obs.cpu(), float(done))
 
         # Accumulate reward
         reward_total.append(reward.item())
@@ -120,9 +120,10 @@ for i in range(episode):
                 for key in eval_net.state_dict():
                     avg_net.state_dict()[key] += eval_net.state_dict()[key] / 100.0
 
-                # Occasionally plot
-                if epoch % 1000 == 0:
-                    plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n,cmap)
+
+                plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap)
+                # Reset values every `plot_interval` for fresh accumulation
+                if epoch % plot_interval == 0:
                     reward_total = []
                     C = []
                     X = []
@@ -141,7 +142,7 @@ for i in range(episode):
                     }, ckpt_path)
                     print(f"Checkpoint saved at {ckpt_path}")
 
-        if Done:
+        if done:
             # On termination, grab final opinions & credibility
             x_final = n_xct[:env.N].detach().cpu().numpy()
             c_final = n_xct[env.N:-1].detach().cpu().numpy()
