@@ -51,6 +51,7 @@ test_net = soft_q_net(observation_dim, bpl, bop, M, action_dimension).to(device)
 #  4) LOAD the final trained model weights
 #########################################
 model_path = "models/final_eval_net.pth"  # or use "checkpoint_epoch_1000.pth" etc.
+model_path = "models/checkpoint_net.pth"
 test_net.load_state_dict(torch.load(model_path, map_location=device))
 test_net.eval()
 print(f"Loaded model from {model_path}")

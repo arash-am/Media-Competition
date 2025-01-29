@@ -108,7 +108,7 @@ for i in range(episode):
 
         # Train if we have enough data in buffer
         if len(buffer.memory) > batch_size:
-            if count % 50 == 0:
+            if count % 100 == 0:
                 epoch += 1
                 loss_p, loss_n, q_print = train(
                     buffer, target_net, eval_net, gamma, optimizer,
@@ -121,7 +121,7 @@ for i in range(episode):
                     avg_net.state_dict()[key] += eval_net.state_dict()[key] / 100.0
 
 
-                plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap)
+                plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap,log_interval=1000, plot_interval=1000)
                 # Reset values every `plot_interval` for fresh accumulation
                 if epoch % plot_interval == 0:
                     reward_total = []
@@ -133,7 +133,7 @@ for i in range(episode):
                 # SAVE CHECKPOINT every 1000 epochs
                 # ------------------------------
                 if epoch % 2000 == 0 and epoch > 0:
-                    ckpt_path = f"models/checkpoint_epoch_{epoch}.pth"
+                    ckpt_path = f"models/checkpoint_net.pth"
                     torch.save({
                         'epoch': epoch,
                         'eval_net_state_dict': eval_net.state_dict(),
