@@ -22,36 +22,43 @@ M = 10
 terminal_time = 200
 nbins = 30
 
-env = Opinion_w_media(
-    N=N,
-    M=M,
-    terminal_time=terminal_time,
-    bM=5,
-    b=20,
-    noise_level=0.1,
-    duration=1,
-    h=torch.tensor(0.1, device=device),
-    nbins=nbins,
-    r_scale=100,
-    eta_1=1,
-    eta_2=1
-)
+env = Opinion_w_media(N=N,
+                      M=M,
+                      terminal_time=201,
+                      bM=4,
+                      b=18,
+                      noise_level=0.1,
+                      duration=1,
+                      h=torch.tensor(0.1, device=device),
+                      nbins=30,
+                      r_scale=100,
+                      eta_1=1,
+                      eta_2=1,
+                      beta_1=3,
+                      beta_2=2,
+                      )
 
 #########################################
 #  3) Define the same network structure
 #########################################
-bpl = 10
-bop = -10
+gamma = 0.98
+learning_rate = 1e-3
+batch_size = 64
+capacity = 5*10**5
+episode = 10_000_000
+observation_dim = nbins + M
+bpl = 20
+bop = -20
+TAU = 0.003
 action_dimension = 2 ** (M // 2)  # must match training
 
-observation_dim = nbins + M
 test_net = soft_q_net(observation_dim, bpl, bop, M, action_dimension).to(device)
 
 #########################################
 #  4) LOAD the final trained model weights
 #########################################
 model_path = "models/final_eval_net.pth"  # or use "checkpoint_epoch_1000.pth" etc.
-model_path = "models/checkpoint_net.pth"
+# model_path = "models/checkpoint_net.pth"
 test_net.load_state_dict(torch.load(model_path, map_location=device))
 test_net.eval()
 print(f"Loaded model from {model_path}")

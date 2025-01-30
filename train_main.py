@@ -40,14 +40,14 @@ env = Opinion_w_media(N=N,
 #  3) Hyperparameters
 #########################################
 gamma = 0.98
-learning_rate = 1e-3
-batch_size = 64
+learning_rate = 3e-3
+batch_size = 512
 capacity = 5*10**5
 episode = 10_000_000
 observation_dim = nbins + M
-bpl = 30
-bop = -30
-TAU = 0.003
+bpl = 20
+bop = -20
+TAU = 0.001
 
 # Number of possible discrete actions (for M=10, 2^(M//2))
 action_dimension = 2 ** (M // 2)
@@ -57,12 +57,12 @@ action_dimension = 2 ** (M // 2)
 #########################################
 target_net = soft_q_net(observation_dim, bpl, bop, M, action_dimension).to(device)
 eval_net   = soft_q_net(observation_dim, bpl, bop, M, action_dimension).to(device)
-avg_net    = soft_q_net(observation_dim, bpl, bop, M, action_dimension).to(device)
+
 
 eval_net.load_state_dict(target_net.state_dict())
-avg_net.load_state_dict(eval_net.state_dict())
 
-optimizer = torch.optim.Adam(eval_net.parameters(), lr=learning_rate, weight_decay=1e-4)
+
+optimizer = torch.optim.Adam(eval_net.parameters(), lr=learning_rate,weight_decay=1e-2)
 buffer = replay_buffer(capacity)
 
 #########################################
@@ -72,12 +72,13 @@ count = 0
 reward_total = []
 Loss = []
 epoch = 0
-max_epochs = 100_000
+max_epochs = 200_000
 done = False
 C = []
 X = []
 Loss = []
 plot_interval=1000
+train_freq=50
 # Ensure "models" directory exists
 os.makedirs("models", exist_ok=True)
 
@@ -108,7 +109,7 @@ for i in range(episode):
 
         # Train if we have enough data in buffer
         if len(buffer.memory) > batch_size:
-            if count % 100 == 0:
+            if count % train_freq == 0:
                 epoch += 1
                 loss_p, loss_n, q_print = train(
                     buffer, target_net, eval_net, gamma, optimizer,
@@ -116,23 +117,18 @@ for i in range(episode):
                 )
                 Loss.append(loss_p)
 
-                # Update avg_net
-                for key in eval_net.state_dict():
-                    avg_net.state_dict()[key] += eval_net.state_dict()[key] / 100.0
-
-
-                plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap,log_interval=1000, plot_interval=1000)
+                plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap, log_interval=100,
+                             plot_interval=1000)
                 # Reset values every `plot_interval` for fresh accumulation
                 if epoch % plot_interval == 0:
                     reward_total = []
                     C = []
                     X = []
-                    avg_net.load_state_dict(eval_net.state_dict())
 
                 # ------------------------------
                 # SAVE CHECKPOINT every 1000 epochs
                 # ------------------------------
-                if epoch % 2000 == 0 and epoch > 0:
+                if epoch % 1000 == 0 and epoch > 0:
                     ckpt_path = f"models/checkpoint_net.pth"
                     torch.save({
                         'epoch': epoch,
