@@ -121,15 +121,42 @@ class soft_q_net(nn.Module):
             )
         return Qa
 
-    def act(self, observation):
+    # def act(self, observation):
+    #     """
+    #     Sample an action for each player from the softmax distribution
+    #     """
+    #     with torch.no_grad():
+    #         # Forward pass
+    #         q_value = self.forward(observation)  # shape [batch, action_dim^2]
+    #         Q_pl = self.getQ_pl(q_value)         # shape [batch, action_dim]
+    #         Q_op = self.getQ_op(q_value)         # shape [batch, action_dim]
+    #
+    #         pi_pl = F.softmax(self.bpl * Q_pl, dim=-1)  # row player's policy
+    #         pi_op = F.softmax(self.bop * Q_op, dim=-1)  # column player's policy
+    #
+    #         dist_pl = torch.distributions.Categorical(pi_pl)
+    #         dist_op = torch.distributions.Categorical(pi_op)
+    #
+    #         # Sample a single action from each player
+    #         ac_pl = dist_pl.sample()  # integer in [0, action_dim)
+    #         ac_op = dist_op.sample()  # integer in [0, action_dim)
+    #
+    #         # Combine them into a single integer for indexing in Q(s,a)
+    #         ac_id = ac_pl * self.action_dim + ac_op
+    #
+    #     # Return the integer action for each player, plus the combined id
+    #     # and the distribution if you want it
+    #     return ac_pl.item(), ac_op.item(), ac_id.item(), torch.cat([pi_pl[0], pi_op[0]])
+    def act(self, observation, epsilon=0.1):
         """
-        Sample an action for each player from the softmax distribution
+        Sample an action for each player from the softmax distribution,
+        but apply epsilon-greedy exploration with probability epsilon.
         """
         with torch.no_grad():
             # Forward pass
             q_value = self.forward(observation)  # shape [batch, action_dim^2]
-            Q_pl = self.getQ_pl(q_value)         # shape [batch, action_dim]
-            Q_op = self.getQ_op(q_value)         # shape [batch, action_dim]
+            Q_pl = self.getQ_pl(q_value)  # shape [batch, action_dim]
+            Q_op = self.getQ_op(q_value)  # shape [batch, action_dim]
 
             pi_pl = F.softmax(self.bpl * Q_pl, dim=-1)  # row player's policy
             pi_op = F.softmax(self.bop * Q_op, dim=-1)  # column player's policy
@@ -137,17 +164,17 @@ class soft_q_net(nn.Module):
             dist_pl = torch.distributions.Categorical(pi_pl)
             dist_op = torch.distributions.Categorical(pi_op)
 
-            # Sample a single action from each player
-            ac_pl = dist_pl.sample()  # integer in [0, action_dim)
-            ac_op = dist_op.sample()  # integer in [0, action_dim)
+            # Apply epsilon-greedy exploration
+            if random.random() < epsilon:
+                ac_pl = torch.randint(0, self.action_dim, (1,), device=device).item()
+                ac_op = torch.randint(0, self.action_dim, (1,), device=device).item()
+            else:
+                ac_pl = dist_pl.sample().item()
+                ac_op = dist_op.sample().item()
 
-            # Combine them into a single integer for indexing in Q(s,a)
             ac_id = ac_pl * self.action_dim + ac_op
 
-        # Return the integer action for each player, plus the combined id
-        # and the distribution if you want it
-        return ac_pl.item(), ac_op.item(), ac_id.item(), torch.cat([pi_pl[0], pi_op[0]])
-
+        return ac_pl, ac_op, ac_id, torch.cat([pi_pl[0], pi_op[0]])
 
 def train(buffer, target_model, eval_model, gamma, optimizer, batch_size, count, update_freq, TAU):
     """
@@ -181,7 +208,7 @@ def train(buffer, target_model, eval_model, gamma, optimizer, batch_size, count,
     optimizer.zero_grad()
     loss.backward()
     # Gradient clipping if desired
-    # torch.nn.utils.clip_grad_norm_(eval_model.parameters(), max_norm=1.0)
+    torch.nn.utils.clip_grad_norm_(eval_model.parameters(), max_norm=1.0)
     optimizer.step()
 
     # Soft update for target network

@@ -40,14 +40,14 @@ env = Opinion_w_media(N=N,
 #  3) Hyperparameters
 #########################################
 gamma = 0.98
-learning_rate = 3e-3
-batch_size = 512
-capacity = 5*10**5
-episode = 10_000_000
+learning_rate = 1e-2
+batch_size = 256
+capacity = 1*10**5
+episode = 50_000_000
 observation_dim = nbins + M
-bpl = 20
-bop = -20
-TAU = 0.001
+bpl = 5
+bop = -5
+TAU = 0.01
 
 # Number of possible discrete actions (for M=10, 2^(M//2))
 action_dimension = 2 ** (M // 2)
@@ -62,7 +62,7 @@ eval_net   = soft_q_net(observation_dim, bpl, bop, M, action_dimension).to(devic
 eval_net.load_state_dict(target_net.state_dict())
 
 
-optimizer = torch.optim.Adam(eval_net.parameters(), lr=learning_rate,weight_decay=1e-2)
+optimizer = torch.optim.Adam(eval_net.parameters(), lr=learning_rate,weight_decay=1e-4)
 buffer = replay_buffer(capacity)
 
 #########################################
@@ -72,7 +72,7 @@ count = 0
 reward_total = []
 Loss = []
 epoch = 0
-max_epochs = 200_000
+max_epochs = 500_000
 done = False
 C = []
 X = []
@@ -117,8 +117,8 @@ for i in range(episode):
                 )
                 Loss.append(loss_p)
 
-                plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap, log_interval=100,
-                             plot_interval=1000)
+                plot_and_log(epoch, X, C, Loss, env, reward_total, loss_p, loss_n, cmap, log_interval=500,
+                             plot_interval=500)
                 # Reset values every `plot_interval` for fresh accumulation
                 if epoch % plot_interval == 0:
                     reward_total = []
