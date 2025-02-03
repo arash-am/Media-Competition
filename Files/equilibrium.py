@@ -39,19 +39,19 @@ def QRE(A, taw=0.1, device=device):
     mu = torch.softmax(torch.rand((Ar.shape[0], 1), device=device), dim=0)
     nu = torch.softmax(torch.rand((Ar.shape[0], 1), device=device), dim=0)
 
-    eta = taw / 30
+    teta = taw / 30
     for _ in range(3 * 10**4):
         mu_old = mu.clone()
         nu_old = nu.clone()
 
-        mub = mu.pow(1 - eta * taw) * torch.exp(eta * (Ar @ nu))
+        mub = mu.pow(1 - teta * taw) * torch.exp(teta * (Ar @ nu))
         mub = mub / mub.sum()
-        nub = nu.pow(1 - eta * taw) * torch.exp(-eta * (Ar.t() @ mu))
+        nub = nu.pow(1 - teta * taw) * torch.exp(-teta * (Ar.t() @ mu))
         nub = nub / nub.sum()
 
-        mu = mu.pow(1 - eta * taw) * torch.exp(eta * (Ar @ nub))
+        mu = mu.pow(1 - teta * taw) * torch.exp(teta * (Ar @ nub))
         mu = mu / mu.sum()
-        nu = nu.pow(1 - eta * taw) * torch.exp(-eta * (Ar.t() @ mub))
+        nu = nu.pow(1 - teta * taw) * torch.exp(-teta * (Ar.t() @ mub))
         nu = nu / nu.sum()
 
         # Compute the duality gap; stop if it is sufficiently small.
