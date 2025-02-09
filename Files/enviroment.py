@@ -71,7 +71,7 @@ class OpinionEnv9Actions:
         self.pi = torch.tensor(math.pi, device=device)
 
         # Beta distribution for s
-        BetaDist = torch.distributions.beta.Beta(beta_1, beta_2)
+        self.BetaDist = torch.distributions.beta.Beta(beta_1, beta_2)
 
         # Shared across all envs: media positions in [-1,1], shape [M]
         self.ym = torch.linspace(-1, 1, steps=self.M, device=device)
@@ -84,7 +84,7 @@ class OpinionEnv9Actions:
         self.x = torch.zeros(self.num_envs, self.N, device=device)
         self.c = torch.zeros(self.num_envs, self.M, device=device)
         self.t = torch.zeros(self.num_envs, device=device)
-        self.s = BetaDist.sample(sample_shape=(self.num_envs, self.N)).to(device)
+        self.s = self.BetaDist.sample(sample_shape=(self.num_envs, self.N)).to(device)
 
         # Exactly 9 actions
         self.action_dim = 9
@@ -116,8 +116,8 @@ class OpinionEnv9Actions:
             # t=0
             self.t.zero_()
             # If you want to re-sample s here, uncomment:
-            BetaDist = torch.distributions.beta.Beta(3,2)
-            self.s = BetaDist.sample(sample_shape=(self.num_envs, self.N)).to(device)
+            
+            self.s = self.BetaDist.sample(sample_shape=(self.num_envs, self.N)).to(device)
         return self.state2obs()
 
     def state2obs(self):
