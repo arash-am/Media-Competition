@@ -73,9 +73,35 @@ def Generator(env, Taw=0.1):
     M = 10
     N = 500
     terminal_time = 200
+    # Compute the QRE equilibrium strategies.
+    mu, nu = QRE(A, taw=Taw, device=device)
+    # Sample one action index for each of the two “players” from the QRE distributions.
+    # We use num_samples=1 so that a single action is applied to all parallel environments.
+    action_i = torch.multinomial((mu / mu.sum()).view(-1), num_samples=1, replacement=True).item()
+    action_j = torch.multinomial((nu / nu.sum()).view(-1), num_samples=1, replacement=True).item()
+    # Run the simulation using the selected actions.
+    run_simulation(action_i, action_j, env)
+    # Extract the final state components.
+    # In the new environment, opinions are stored in env.x, credibility in env.c, and susceptibility in env.s.
+    x = env.x.cpu().numpy().flatten()
+    s = env.s.cpu().numpy().flatten()
+    c = env.c.cpu().numpy().flatten()
+    return x, s, c, None
 
-    # (Optional) Set the plot font style.
-    plt.rc('font', family='serif', size=18)
+
+def Generator_beta(env, Taw=0.1):
+    """
+    Load the payoff matrix A, compute a QRE (which gives a probability distribution over actions),
+    instantiate the updated environment OpinionEnv9Actions, sample one action (per “player”) from the QRE,
+    run a simulation, and return the final opinions x, susceptibilities s, and credibility c.
+    (The fourth returned value is set to None because the previous code returned env.AEm which is no longer defined.)
+    """
+    # Load the payoff matrix from file.
+    load_file=f'Payoff_matrix_susceptiblity/Payoff-beta_1_{round(env.beta_1, 1)}beta_2_{round(env.beta_2, 1)}.pt'
+    A = torch.load(load_file)
+    M = 10
+    N = 500
+    terminal_time = 200
 
     # Compute the QRE equilibrium strategies.
     mu, nu = QRE(A, taw=Taw, device=device)
@@ -90,6 +116,4 @@ def Generator(env, Taw=0.1):
     x = env.x.cpu().numpy().flatten()
     s = env.s.cpu().numpy().flatten()
     c = env.c.cpu().numpy().flatten()
-
-    # The original code returned a fourth variable (env.AEm); here we return None.
     return x, s, c, None
